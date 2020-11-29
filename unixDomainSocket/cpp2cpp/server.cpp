@@ -13,18 +13,26 @@ int onError(const char* err, int socket_fd)
 	return (-1);
 }
 
+void handler(int signum)
+{
+	remove(SOCKET_FILE);
+	exit(1);
+}
+
 int main(void)
 {
 	int socket_fd = -1;
 	int fd;
 	size_t size;
 	char buffer[256];
-	struct sockaddr_un addr = { 0 }; // 0 init.
+	struct sockaddr_un addr = { 0 };
 
+	if (signal(SIGINT, handler) == SIG_ERR)
+		exit(1);
 	if ((socket_fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		return (onError("socket_fd != 0", socket_fd));
-	addr.sun_family = AF_UNIX; // Fixed.
-	strcpy(addr.sun_path, SOCKET_FILE); // Common socket file.
+	addr.sun_family = AF_UNIX;
+	strcpy(addr.sun_path, SOCKET_FILE);
 	remove(addr.sun_path);
 	if (bind(socket_fd, (struct sockaddr*) &addr, sizeof(struct sockaddr_un)) != 0)
 		return (onError("bind failed.", socket_fd));
@@ -40,6 +48,8 @@ int main(void)
 				return (onError("read failed.", socket_fd));
 			buffer[size] = '\0';
 			std::cout << "Received: " << buffer << std::endl;
+			if (write(fd, "ok", 2) == -1)
+				return (onError("write failed.", socket_fd));
 		}
 		close(fd);
 	}
@@ -47,4 +57,3 @@ int main(void)
 	std::cout << "The Server is Terminated" << std::endl;
 	return 0;
 }
-
