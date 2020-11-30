@@ -1,5 +1,5 @@
 const net = require('net');
-const client = net.createConnection('/tmp/unix.sock');
+const client = net.createConnection('unix_socket');
 
 client.on('connect', () => {
 	console.log('connected.');
